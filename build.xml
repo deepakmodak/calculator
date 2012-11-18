@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="calculator" default="archive" basedir=".">
+	
+    <description>
+           Digital Gradient Calculator
+    </description>
+	
+	<property file="build.properties"/>
+
+	<taskdef name="deploy" classname="org.apache.catalina.ant.DeployTask">
+		<classpath>
+			<pathelement location="lib/catalina-ant.jar"/>
+		</classpath>
+	</taskdef>
+	
+	<taskdef name="undeploy" classname="org.apache.catalina.ant.UndeployTask">
+		<classpath>
+			<pathelement location="lib/catalina-ant.jar"/>
+		</classpath>
+	</taskdef>
+	
+	
+	<!-- ==================== Clean Target ==================================== -->
+	<target name="clean" description="Delete old build and dist directories">
+		<delete dir="${dist.home}" />
+		<delete dir="${build.home}"/>
+		<delete dir="${bin.home}" />
+	</target>
+
+	<!-- ==================== Init Target ================================== -->
+	<target name="init" depends="clean" description="Create build directory">
+	    <mkdir dir="${build.client}" />
+		<mkdir dir="${build.webapp}" />
+	</target>
+
+	<!-- ==================== Compile Target ================================== -->
+	<target name="compile" depends="init" description="Compile Java sources">
+		
+		<javac srcdir="${source.home}" destdir="${build.client}" debug="${compile.debug}" deprecation="${compile.deprecation}" optimize="${compile.optimize}" source="1.6" target="1.6">
+			<classpath>
+				<path>
+					<fileset dir="${lib.home}" />
+				</path>
+			</classpath>
+		</javac>
+	</target>
+
+	<!-- ==================== Build Target ================================== -->
+	<target name="build" depends="compile" description="Copies all non Java classes to build directoy">
+		<!--For Web Application-->
+		<copy todir="${build.webapp}/WEB-INF/classes">
+			<fileset dir="${build.client}" excludes="CVS,**/*.java" />
+		</copy>
+
+		<copy todir="${build.webapp}/WEB-INF/lib">
+			<fileset dir="${lib.home}">
+				 <exclude name="servlet-api.jar"/>
+			</fileset>
+		</copy>
+						
+		<copy todir="${build.webapp}/WEB-INF/views"> 
+			<fileset dir="${views.home}">
+			</fileset>
+		</copy>
+		
+		<copy file="${configxml}" 	todir="${build.webapp}/WEB-INF/" />			
+		<copy file="${configmvc}"   todir="${build.webapp}/WEB-INF/" />
+		<copy file="${configapp}"   todir="${build.webapp}/WEB-INF/" />
+				
+	</target>
+
+	<!-- ==================== Archive Target ================================== -->
+	<target name="archive" depends="build" description="Create binary archive of all files in dist.home">
+		<mkdir dir="${dist.home}" />
+		
+		<jar jarfile="${dist.home}/${app.name}.war"	basedir="${build.webapp}" />
+	</target>
+	
+	<target name="deploy">
+		<delete file="${tomcat.webapps}/${app.name}.war"/>
+		
+		<delete dir="${tomcat.webapps}/${app.name}"/>
+		<copy file="${dist.home}/${app.name}.war"
+				todir="${tomcat.webapps}"
+				overwrite="true"
+				verbose="true"/>
+	</target>
+</project>
